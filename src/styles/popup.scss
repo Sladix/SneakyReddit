@@ -40,40 +40,7 @@ footer {
   padding: 0;
 }
 
-.site-description {
-  padding: 0.5em;
-  border: 1px solid $gray;
-  margin: 0;
-
-  h3 {
-    margin: 0;
-    padding: 0;
-    border-bottom: 1px solid $gray;
-    padding-bottom: 0.5em;
-  }
-
-  .description {
-    color: $text-secondary;
-    max-height: 100px;
-    font-size: 0.8em;
-    line-height: 1.2;
-  }
-
-  .url {
-    outline: none;
-    text-decoration: none;
-    line-height: 1.2;
-    font-size: 0.8em;
-    word-break: break-word;
-    display: block;
-  }
-}
-
-.action-container {
-  margin: 1em auto;
-}
-
-.btn {
+.btn,.btn:hover,.btn:active,.btn:focus {
   background: none;
   border: none;
   display: inline-block;
