@@ -49,6 +49,10 @@ const actions = {
         clicked.dataset.loaded = true;
       })
     }
+  },
+  open : function(action,clicked,rootEl){
+    let url = clicked.dataset.url;
+    window.open(url, '_blank');
   }
 };
 
@@ -78,6 +82,7 @@ var processItemData = (data,el = null) => {
         templateData.actions.forEach((action) => {
           // If the action exists we add listeners
           if(actions[action.name]){
+            console.log(action.name);
             let toListen = (element.classList.contains(action.trigger.replace('.','')))?element:element.querySelector(action.trigger);
             // If a listenner must be set, set it
             if(toListen){

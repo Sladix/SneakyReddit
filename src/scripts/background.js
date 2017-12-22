@@ -19,7 +19,7 @@ var chromeTemplate = {
               ##title##
             </div>
             <ul class="iK eZ" aria-label="Actions sur les éléments" role="toolbar" jstcache="87">
-              <li class="dU action actionIcon AK ew IDHmlf itemIconPin load-comment" data-id="##id##"><img src="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/1x/btw_ic_pin_black_24dp.png" srcset="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/2x/btw_ic_pin_black_24dp_2x.png 2x" aria-hidden="true"></li>
+              <li class="dU action actionIcon AK ew IDHmlf itemIconPin open-url" data-url="##url##"><img src="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/1x/btw_ic_pin_black_24dp.png" srcset="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/2x/btw_ic_pin_black_24dp_2x.png 2x" aria-hidden="true"></li>
               <li class="dU action actionIcon AK ew qt cCDEtf itemIconSnooze"><img src="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/1x/btw_ic_snooze_black_24dp.png" srcset="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/2x/btw_ic_snooze_black_24dp_2x.png 2x" aria-hidden="true" jstcache="93"></li>
               <li class="dU action actionIcon AK ew yGmXKc itemIconTrash"><img src="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/1x/btw_ic_mark_trash_black_24dp.png" srcset="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/2x/btw_ic_mark_trash_black_24dp_2x.png 2x" aria-hidden="true" jstcache="93"></li>
               <li class="dU action actionIcon AK ew LX5qPe gyUykd itemIconDone"><img src="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/1x/btw_ic_done_black_24dp.png" srcset="//ssl.gstatic.com/bt/C3341AA7A1A076756462EE2E5CD71C11/2x/btw_ic_done_black_24dp_2x.png 2x" aria-hidden="true" jstcache="93"></li>
@@ -43,6 +43,10 @@ var chromeTemplate = {
       trigger : ".expand",
       classList : ['scroll-list-item-open'],
       target : ".expanded"
+    },
+    {
+      name : "open",
+      trigger : ".open-url"
     }
   ]
 };
