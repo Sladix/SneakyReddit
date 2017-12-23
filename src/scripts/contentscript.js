@@ -1,10 +1,13 @@
 import ext from "./utils/ext";
 
 let templateData = {};
-let requestedPath = '';
+let currentPath = '';
 let app = null;
 let appDatas = {};
 
+const choose = (array) => {
+	return array[Math.floor(Math.random() * array.length)];
+}
 
 const getJSON = function(url, successHandler, errorHandler) {
 	const xhr = typeof XMLHttpRequest != 'undefined'
@@ -34,6 +37,7 @@ const htmlToElement = (html) => {
     return template.content.firstChild;
 }
 
+// List of actions template can execute
 const actions = {
   expand : function(action,clicked,rootEl){
     // Add the needed classes
@@ -44,19 +48,61 @@ const actions = {
     var id = clicked.dataset.id;
     if(!clicked.dataset.loaded){
       let target = rootEl.querySelector(action.target);
-      fetchReddit(requestedPath+id,function(data){
+      fetchReddit(currentPath+id,function(data){
+				// TODO : Handle multiple targets
+				//processItemData(data[0].data,target);
         processItemData(data[1].data,target);
         clicked.dataset.loaded = true;
       })
     }
   },
   open : function(action,clicked,rootEl){
+    // Add the needed classes
+    if(action.classList){
+      rootEl.classList.toggle(action.classList);
+    }
     let url = clicked.dataset.url;
     window.open(url, '_blank');
-  }
+  },
+	loadReplies : function(action,clicked,rootEl){
+		console.log("fuck off");
+    // Add the needed classes
+    if(action.classList){
+      clicked.closest(action.target).classList.toggle(action.classList);
+    }
+
+	}
 };
 
+// Template generation helpers
+const templateFunctions = {
+	getRandomLetter(){
+		return choose("abcdefghijklmnopqrstuvwxyz".split(""));
+	},
+	getFirstLetter(word){
+		for (var i = 0; i < word.length; i++) {
+			if(word[i].match(/[a-z0-9]/i)){
+				return word[i].toLowerCase();
+			}
+		}
+	},
+	intValue(value){
+		return (value)?parseInt(value):0;
+	}
+}
+
+// Process the data from reddit and apply it in the template then insert in the dom
 var processItemData = (data,el = null) => {
+	console.log(data);
+	if(data.kind && data.kind == "Listing"){
+		data = data.data;
+	}
+	if(data.constructor === Array){
+    data.forEach((d)=>{
+      processItemData(d,el);
+    })
+  }
+	let finalString = ''; // Used if we want to get raw html instead of injecting nodes to the dom
   data.children.forEach((item)=>{
     // Get item type
     let type = item.kind;
@@ -72,47 +118,78 @@ var processItemData = (data,el = null) => {
         let naked = tag.replace(/#/g,'');
         if(item.data && item.data[naked]){
           // replace the tag by the json value
-          templatePart = templatePart.replace(tag,item.data[naked]);
+					if(item.data[naked].kind && item.data[naked].kind == "Listing"){
+						// If we got a listing process it but as a string
+						templatePart = templatePart.replace(tag,processItemData(item.data[naked],false));
+					}else{
+          	templatePart = templatePart.replace(tag,item.data[naked]);
+					}
           valid = true;
-        }
+        }else{
+					templatePart = templatePart.replace(tag,'');
+				}
       });
-      // If at least one tag is replace, we add the element
-      if(valid){
+			// Find all the utilities tag
+			let utilities = templatePart.match(/%%%(.*)%%%/g);
+			if(utilities){
+	      utilities.forEach((util) => {
+	        // get the original property name
+	        let naked = util.replace(/%%%/g,'');
+	        if(naked[0] == '[' && naked[naked.length-1] == ']'){
+						naked = JSON.parse(naked);
+						templatePart = templatePart.replace(util,choose(naked));
+					}
+					let parts = naked.split("_");
+					let arg = null;
+					if(parts.length > 1){
+						naked = parts[0];
+						arg = parts.slice(1).join('_');
+					}
+					if(templateFunctions[naked]){
+						templatePart = templatePart.replace(util,templateFunctions[naked](arg));
+					}
+	      });
+			}
+
+			if(el === null){
+				el = app;
+			}
+			// If at least one tag is replaced AND we have an element, we add the element
+			// Eitherway we return the string;
+      if(valid && el){
         let element = htmlToElement(templatePart);
         templateData.actions.forEach((action) => {
           // If the action exists we add listeners
           if(actions[action.name]){
-            console.log(action.name);
-            let toListen = (element.classList.contains(action.trigger.replace('.','')))?element:element.querySelector(action.trigger);
+            let toListen = (element.classList.contains(action.trigger.replace('.','')))?element:element.querySelectorAll(action.trigger);
             // If a listenner must be set, set it
             if(toListen){
-              toListen.addEventListener('click',(e)=>{
-                actions[action.name](action,e.currentTarget,element);
-                e.preventDefault();
-                e.stopPropagation();
-              });
+							if(toListen.constructor == NodeList){
+								toListen.forEach((i)=>{ addListenerToItem(i,action,element) });
+							}else{
+								addListenerToItem(toListen,action,element);
+							}
             }
           }
         });
-        if(el == null){
-          el = app;
-        }
         el.appendChild(element);
-      }
+      }else{
+				finalString += templatePart;
+			}
     }
   });
+	return finalString;
 }
 
-var assignDataToTemplate = (data) => {
-  if(data.constructor === Array){
-    data.forEach((d)=>{
-      assignDataToTemplate(d);
-    })
-  }else if(data.kind && data.kind == "Listing"){
-      processItemData(data.data);
-  }
-};
+const addListenerToItem = (item,action,element) => {
+	item.addEventListener('click',(e)=>{
+		actions[action.name](action,e.currentTarget,element);
+		e.preventDefault();
+		e.stopPropagation();
+	});
+}
 
+// Json query method
 var fetchReddit = (path,callback) => {
    let url = 'https://www.reddit.com/'+path+'.json';
    getJSON(url,(data) => {
@@ -125,23 +202,41 @@ var fetchReddit = (path,callback) => {
 };
 
 var injectApp = () => {
+	let selApp = document.getElementById('sneaky-reddit-app');
+	if(selApp){
+		app = selApp;
+	}
   if(app == null){
     var injectionSpot = document.querySelector(templateData.injectionSelector);
+		// Handle the case of the injectionSpot not found
+
+		// Append template style
+		var style = document.createElement('style');
+		style.type = 'text/css';
+		style.innerHTML = templateData.styles;
+		// Append app Container
     app = document.createElement('div');
     app.id = "sneaky-reddit-app";
+    injectionSpot.appendChild(style);
     injectionSpot.appendChild(app);
+
   }
 
   updateAppData();
 };
 
+// Kind of useless method, need to be integrated in processItemData (which shoud be renamed in processData)
+var assignDataToTemplate = (data) => {
+    processItemData(data);
+};
+
 var updateAppData = () => {
-  if(!requestedPath){
+  if(!currentPath){
     return;
   }
   // reset app html
   app.innerHTML = '';
-  fetchReddit(requestedPath,assignDataToTemplate);
+  fetchReddit(currentPath,assignDataToTemplate);
 };
 
 var extractType = () => {
@@ -162,15 +257,17 @@ console.log("Script injected");
 function onRequest(request, sender, sendResponse) {
   if (request.action === 'process-page') {
     let data = {
-      type : extractType()
+      type : extractType(),
+			injected : (app == null)?false:true,
+			path : currentPath
     };
     sendResponse(data);
   }else if (request.action === 'inject') {
     templateData = request.template;
-    requestedPath = request.requestedPath;
+    currentPath = request.currentPath;
     injectApp();
   }else if (request.action == "changePath"){
-    requestedPath = request.requestedPath;
+    currentPath = request.currentPath;
     updateAppData();
   }
 };

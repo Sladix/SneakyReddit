@@ -13,13 +13,6 @@ storage.get('color', function(resp) {
   }
 });
 
-// Option page
-var optionsLink = document.querySelector(".js-options");
-optionsLink.addEventListener("click", function(e) {
-  e.preventDefault();
-  ext.tabs.create({'url': ext.extension.getURL('options.html')});
-});
-
 // On click, we gather data about page
 ext.tabs.query({active: true, currentWindow: true}, function(tabs) {
   var activeTab = tabs[0];
@@ -30,7 +23,8 @@ ext.tabs.query({active: true, currentWindow: true}, function(tabs) {
 var renderInjectOptions = (data) => {
   var displayContainer = document.getElementById("display-container");
   displayContainer.innerHTML = `
-  <p class="pageType">Detected page type : ${data.type}</p>
+  <p class="status">Detected page type : ${data.type}</p>
+  ${ data.injected ? '<p class="status">Reddit already injected</p>' : '' }
   <div id="messages"></div>`;
   type = data.type;
 }
@@ -55,3 +49,10 @@ injectBtn.addEventListener("click", function(e) {
     }
   })
 })
+
+// Option page
+var optionsLink = document.querySelector(".js-options");
+optionsLink.addEventListener("click", function(e) {
+  e.preventDefault();
+  ext.tabs.create({'url': ext.extension.getURL('options.html')});
+});
